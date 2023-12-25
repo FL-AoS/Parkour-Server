@@ -1,0 +1,10 @@
+logs/*
+maps/*
+ParkourDB/*
+scripts/__pycache__
+scripts/README.md
+scripts/discordlink.py
+game_modes/__pycache__
+game_modes/README.md
+bans.txt
+config.toml
