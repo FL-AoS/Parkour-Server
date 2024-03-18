@@ -57,7 +57,7 @@ def apply_script(protocol, connection, config):
 				if secs < 10:
 					secs_msg = "0%i"%(secs)
 
-				self.send_cmsg("Current Time", "Status")
-				self.send_cmsg("%s:%s"%(mins_msg, secs_msg), "Status")
+				self.send_chat_status("Current Time")
+				self.send_chat_status("%s:%s"%(mins_msg, secs_msg))
 
 	return timeProtocol, timeConnec
