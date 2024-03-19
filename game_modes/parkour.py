@@ -237,8 +237,20 @@ async def checking_loop(protocol):
 					xCs, yCs, zCs = checkpoints_size[index]
 
 					if ((x >= xCp and x <= xCp+xCs) and (y >= yCp and y <= yCp+yCs) and (z <= zCp and z >= zCp-zCs)):
+						player.current_times.insert(player.reachedcheckpoint, get_now_in_ms() - player.joinedtimestamp)
+						print(player.current_times)
+						print(player.last_run_times)
+						time_msg = "Time %s"%(get_formatted_parkour_time(player.current_times[player.reachedcheckpoint]))
+
+						if len(player.pb_times) > 0:
+							time_msg += " - PB: %s"%(get_formatted_parkour_time(player.pb_times[player.reachedcheckpoint]))
+
+						if len(player.last_run_times) > player.reachedcheckpoint:
+							time_msg += " - Last: %s"%(get_formatted_parkour_time(player.last_run_times[player.reachedcheckpoint]))
+
 						player.reachedcheckpoint += 1
 						player.send_chat("You reached checkpoint %i/%i!"%(player.reachedcheckpoint, maxCps))
+						player.send_chat_warning(time_msg)
 
 						if player.reachedcheckpoint == maxCps:
 							player.send_chat("FINISH!!!")
@@ -291,6 +303,11 @@ def apply_script(protocol, connection, config):
 		practicemode = False
 		practice_respawn = None
 
+		current_times = []
+		last_run_times = []
+		pb_times = []
+		pb_time = 0
+
 		def shadowinputSave(self):
 			newtime = get_now_in_ms()-self.joinedtimestamp
 			cansaveinputs = False
@@ -332,6 +349,9 @@ def apply_script(protocol, connection, config):
 		def on_spawn_location(self, pos):
 			if self.team is self.protocol.blue_team and self.practice_respawn is None:
 				if self.isresetting:
+					self.last_run_times = self.current_times
+					self.current_times = []
+
 					reset_player_stats(self)
 				self.isresetting = False
 				ext = self.protocol.map_info.extensions
@@ -376,9 +396,15 @@ def apply_script(protocol, connection, config):
 			if self.team is self.protocol.blue_team and not self.completedparkour and not self.practicemode:
 				self.completedparkour = True
 				if self.joinedtimestamp is not None:
-					displaytime = get_formatted_parkour_time(get_now_in_ms() -
-															 self.joinedtimestamp)
+					ts = get_now_in_ms() - self.joinedtimestamp
+					displaytime = get_formatted_parkour_time(ts)
 					msg = "Congratulations, %s completed the parkour! Stats: %s mins, %s deaths"
+
+					if self.pb_time == 0 or ts < self.pb_time:
+						msg+=" (PERSONAL BEST!!)"
+						self.pb_time = ts
+						self.pb_times = self.current_times
+
 					completedmessage = msg % (self.name, displaytime, self.deathcount)
 					self.protocol.broadcast_chat(completedmessage)
 					self.protocol.irc_say(completedmessage)
