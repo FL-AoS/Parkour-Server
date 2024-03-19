@@ -56,6 +56,7 @@ Customizations by sByte:
 import time
 import operator
 from pyspades.constants import *
+from pyspades.collision import vector_collision
 from piqueserver.commands import command
 from piqueserver.config import config
 from math import floor
@@ -219,6 +220,9 @@ async def checking_loop(protocol):
 
 			if player.isresetting:
 				continue
+
+			if vector_collision(player.world_object.position, player.team.base) or vector_collision(player.world_object.position, player.team.other.base):
+				player.check_refill()
 
 			if "parkour_3d_checkpoints" in protocol.map_info.extensions and protocol.map_info.extensions["parkour_3d_checkpoints"]:
 				checkpoints = protocol.map_info.extensions["parkour_checkpoints"]
