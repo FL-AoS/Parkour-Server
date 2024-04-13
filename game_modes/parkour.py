@@ -238,8 +238,6 @@ async def checking_loop(protocol):
 
 					if ((x >= xCp and x <= xCp+xCs) and (y >= yCp and y <= yCp+yCs) and (z <= zCp and z >= zCp-zCs)):
 						player.current_times.insert(player.reachedcheckpoint, get_now_in_ms() - player.joinedtimestamp)
-						print(player.current_times)
-						print(player.last_run_times)
 						time_msg = "Time %s"%(get_formatted_parkour_time(player.current_times[player.reachedcheckpoint]))
 
 						if len(player.pb_times) > 0:
