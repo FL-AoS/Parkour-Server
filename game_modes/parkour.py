@@ -221,6 +221,9 @@ async def checking_loop(protocol):
 			if player.isresetting:
 				continue
 
+			if player.team.id == -1:
+				continue
+
 			if vector_collision(player.world_object.position, player.team.base) or vector_collision(player.world_object.position, player.team.other.base):
 				player.check_refill()
 
@@ -237,7 +240,7 @@ async def checking_loop(protocol):
 					xCs, yCs, zCs = checkpoints_size[index]
 
 					if ((x >= xCp and x <= xCp+xCs) and (y >= yCp and y <= yCp+yCs) and (z <= zCp and z >= zCp-zCs)):
-						player.current_times.insert(player.reachedcheckpoint, get_now_in_ms() - player.joinedtimestamp)
+						player.current_times.append(get_now_in_ms() - player.joinedtimestamp)
 						time_msg = "Time %s"%(get_formatted_parkour_time(player.current_times[player.reachedcheckpoint]))
 
 						if len(player.pb_times) > 0:
