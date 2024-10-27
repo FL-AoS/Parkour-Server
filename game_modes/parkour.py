@@ -208,20 +208,21 @@ def nextcheckpoint(p):
 
 async def checking_loop(protocol):
 	while True:
-		for player in protocol.players.values():
+		player_list = list(protocol.players.values())
+		for player in player_list:
 			if player.local:
 				continue
 
 			if not player.world_object:
 				continue
 
+			if player.team.id == -1 or player.team.id == 1:
+				continue
+
 			if player.practicemode:
 				continue
 
 			if player.isresetting:
-				continue
-
-			if player.team.id == -1:
 				continue
 
 			if vector_collision(player.world_object.position, player.team.base) or vector_collision(player.world_object.position, player.team.other.base):
