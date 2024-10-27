@@ -310,8 +310,7 @@ def apply_script(protocol, connection, config):
 		pb_times = []
 		pb_time = 0
 
-		def shadowinputSave(self):
-			newtime = get_now_in_ms()-self.joinedtimestamp
+		def shadowinputSave(self, newtime):
 			cansaveinputs = False
 
 			if not os.path.exists(get_shadow_filename(self)):
@@ -411,11 +410,11 @@ def apply_script(protocol, connection, config):
 					self.protocol.broadcast_chat(completedmessage)
 					self.protocol.irc_say(completedmessage)
 
-					self.on_parkour_finish()
+					self.on_parkour_finish(ts)
 
 					if SAVE_HIGHSCORES.get() and self.logged_user_id is not None:
-						self.protocol.save_record(self)
-						self.shadowinputSave()
+						self.protocol.save_record(self, ts)
+						self.shadowinputSave(ts)
 
 					if self.logged_user_id is None:
 						self.send_chat("To save your scores on /highscore, please use /register or /login")

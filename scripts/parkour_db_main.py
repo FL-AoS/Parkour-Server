@@ -137,13 +137,12 @@ def apply_script(protocol, connection, config):
 
 			return protocol.on_map_change(self, _map)
 
-		def save_record(self, player):
+		def save_record(self, player, wints):
 			if player.logged_user_id is None:
 				return
 
 			current_map = ''.join(self.map_info.rot_info.name.split(" "))
 			fulltimestamp = round(time()*1000)
-			wints = fulltimestamp-player.joinedtimestamp
 
 			scores = self.get_all_records()
 

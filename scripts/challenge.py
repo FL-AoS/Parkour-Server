@@ -186,10 +186,10 @@ def apply_script(protocol, connection, config):
 
 			return connection.on_disconnect(self)
 
-		def on_parkour_finish(self):
+		def on_parkour_finish(self, timestamp):
 			if self.racing_challenge:
 				self.protocol.end_challenge(self, self.racing_enemy)
 
-			return connection.on_parkour_finish(self)
+			return connection.on_parkour_finish(self, timestamp)
 
 	return challengeProtocol, challengeConnection
