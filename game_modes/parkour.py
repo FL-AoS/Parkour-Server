@@ -469,6 +469,7 @@ def apply_script(protocol, connection, config):
 			self.balanced_teams = 0
 			self.building = False
 			self.fall_damage = False
+			self.killing = False
 			self.spawn_shadow_runner()
 
 			return protocol.on_map_change(self, _map)
