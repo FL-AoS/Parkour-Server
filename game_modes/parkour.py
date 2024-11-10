@@ -44,7 +44,7 @@ Commands:
 
 
 Customizations by sByte:
-- SQLite3 database
+- ~~SQLite3 database~~ Mariadb database
 - Practice mode
 - ShadowMode support (custom)
 - Timer (custom, optional)
@@ -96,19 +96,14 @@ def highscore(connection):
 		if i > 10:
 			break
 
-		f_time = get_formatted_parkour_time(displayvalues[0])
-		userid = displayvalues[2]
-		deaths = displayvalues[3]
-
-		username = connection.protocol.dbCursorUsers.execute("""
-			SELECT name FROM users
-			WHERE user_id=?
-		""", (userid,)).fetchall()
+		username = displayvalues[1]
+		f_time = get_formatted_parkour_time(displayvalues[3])
+		deaths = displayvalues[4]
 
 		place = str(i) + ". "
 		if i < 10:
 			place += " "
-		strscores.append(place + str(username[0][0]) + "  (" + f_time +
+		strscores.append(place + str(username) + "  (" + f_time +
 						 " mins, deaths: " + str(deaths) + ")")
 		i += 1
 
@@ -208,57 +203,60 @@ def nextcheckpoint(p):
 
 async def checking_loop(protocol):
 	while True:
-		player_list = list(protocol.players.values())
-		for player in player_list:
-			if player.local:
-				continue
+		try:
+			player_list = list(protocol.players.values())
+			for player in player_list:
+				if player.local:
+					continue
 
-			if not player.world_object:
-				continue
+				if not player.world_object:
+					continue
 
-			if player.team.id == -1 or player.team.id == 1:
-				continue
+				if player.team.id == -1 or player.team.id == 1:
+					continue
 
-			if player.practicemode:
-				continue
+				if player.practicemode:
+					continue
 
-			if player.isresetting:
-				continue
+				if player.isresetting:
+					continue
 
-			if vector_collision(player.world_object.position, player.team.base) or vector_collision(player.world_object.position, player.team.other.base):
-				player.check_refill()
+				if vector_collision(player.world_object.position, player.team.base) or vector_collision(player.world_object.position, player.team.other.base):
+					player.check_refill()
 
-			if "parkour_3d_checkpoints" in protocol.map_info.extensions and protocol.map_info.extensions["parkour_3d_checkpoints"]:
-				checkpoints = protocol.map_info.extensions["parkour_checkpoints"]
-				checkpoints_size = protocol.map_info.extensions["parkour_checkpoints_size"]
+				if "parkour_3d_checkpoints" in protocol.map_info.extensions and protocol.map_info.extensions["parkour_3d_checkpoints"]:
+					checkpoints = protocol.map_info.extensions["parkour_checkpoints"]
+					checkpoints_size = protocol.map_info.extensions["parkour_checkpoints_size"]
 
-				x, y, z = player.world_object.position.get()
-				index = player.reachedcheckpoint
-				maxCps = len(checkpoints)
+					x, y, z = player.world_object.position.get()
+					index = player.reachedcheckpoint
+					maxCps = len(checkpoints)
 
-				if index < maxCps:
-					xCp, yCp, zCp = checkpoints[index]
-					xCs, yCs, zCs = checkpoints_size[index]
+					if index < maxCps:
+						xCp, yCp, zCp = checkpoints[index]
+						xCs, yCs, zCs = checkpoints_size[index]
 
-					if ((x >= xCp and x <= xCp+xCs) and (y >= yCp and y <= yCp+yCs) and (z <= zCp and z >= zCp-zCs)):
-						player.current_times.append(get_now_in_ms() - player.joinedtimestamp)
-						time_msg = "Time %s"%(get_formatted_parkour_time(player.current_times[player.reachedcheckpoint]))
+						if ((x >= xCp and x <= xCp+xCs) and (y >= yCp and y <= yCp+yCs) and (z <= zCp and z >= zCp-zCs)):
+							player.current_times.append(get_now_in_ms() - player.joinedtimestamp)
+							time_msg = "Time %s"%(get_formatted_parkour_time(player.current_times[player.reachedcheckpoint]))
 
-						if len(player.pb_times) > 0:
-							time_msg += " - PB: %s"%(get_formatted_parkour_time(player.pb_times[player.reachedcheckpoint]))
+							if len(player.pb_times) > 0:
+								time_msg += " - PB: %s"%(get_formatted_parkour_time(player.pb_times[player.reachedcheckpoint]))
 
-						if len(player.last_run_times) > player.reachedcheckpoint:
-							time_msg += " - Last: %s"%(get_formatted_parkour_time(player.last_run_times[player.reachedcheckpoint]))
+							if len(player.last_run_times) > player.reachedcheckpoint:
+								time_msg += " - Last: %s"%(get_formatted_parkour_time(player.last_run_times[player.reachedcheckpoint]))
 
-						player.reachedcheckpoint += 1
-						player.send_chat("You reached checkpoint %i/%i!"%(player.reachedcheckpoint, maxCps))
-						player.send_chat_warning(time_msg)
+							player.reachedcheckpoint += 1
+							player.send_chat("You reached checkpoint %i/%i!"%(player.reachedcheckpoint, maxCps))
+							player.send_chat_warning(time_msg)
 
-						if player.reachedcheckpoint == maxCps:
-							player.send_chat("FINISH!!!")
+							if player.reachedcheckpoint == maxCps:
+								player.send_chat("FINISH!!!")
 
 
-			player.check_waterglitch()
+				player.check_waterglitch()
+		except Exception as e:
+			print("Error in check loop: ",e)
 
 		await asyncio.sleep(0.001)
 

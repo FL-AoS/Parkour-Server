@@ -25,3 +25,8 @@ Structure as follows:
     └── ...
 ```
 
+### Dependencies
+- mariadb
+
+### Migrating from sqlite3 to mariadb
+Open ParkourDB/sqlite_to_mariadb.py and edit the mariadb connection informations, then just run the script

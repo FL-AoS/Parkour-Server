@@ -1,6 +1,7 @@
 logs/*
 maps/*
 ParkourDB/*
+!ParkourDB/sqlite_to_mariadb.py
 scripts/__pycache__
 scripts/README.md
 scripts/discordlink.py
