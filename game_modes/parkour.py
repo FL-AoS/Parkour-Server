@@ -202,8 +202,14 @@ def nextcheckpoint(p):
 	return "Advanced to checkpoint: %i"%(p.reachedcheckpoint)
 
 async def checking_loop(protocol):
+	last_update_network = 0
 	while True:
 		try:
+			if time.time()-last_update_network >= 1/20:
+				protocol.update_network()
+				protocol.on_world_update()
+				last_update_network = time.time()
+
 			player_list = list(protocol.players.values())
 			for player in player_list:
 				if player.local:
