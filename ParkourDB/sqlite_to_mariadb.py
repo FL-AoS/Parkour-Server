@@ -41,7 +41,7 @@ def create_player_table():
 
 def create_map_table():
 	dbCursor.execute("""
-		CREATE TABLE IF NOT EXISTS maps
+		CREATE TABLE IF NOT EXISTS prk_maps
 		(id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
 		 name VARCHAR(255) NOT NULL UNIQUE,
 		 creator VARCHAR(255) NOT NULL,
@@ -57,10 +57,10 @@ def create_map_table():
 
 def create_run_history_table():
 	dbCursor.execute("""
-		CREATE TABLE IF NOT EXISTS run_history
+		CREATE TABLE IF NOT EXISTS prk_run_history
 		(id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
 		 player_id BIGINT(20) UNSIGNED NOT NULL REFERENCES players(id),
-		 map_id BIGINT(20) UNSIGNED NOT NULL REFERENCES maps(id),
+		 map_id BIGINT(20) UNSIGNED NOT NULL REFERENCES prk_maps(id),
 		 demo_url VARCHAR(255) DEFAULT NULL,
 		 client_info VARCHAR(255) DEFAULT NULL,
 		 time INT(11) NOT NULL,
@@ -74,10 +74,10 @@ def create_run_history_table():
 
 def create_checkpoint_history_table():
 	dbCursor.execute("""
-		CREATE TABLE IF NOT EXISTS checkpoint_history
+		CREATE TABLE IF NOT EXISTS prk_checkpoint_history
 		(id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
 		 checkpoint INT(11) NOT NULL,
-		 run_id BIGINT(20) UNSIGNED NOT NULL REFERENCES run_history(id),
+		 run_id BIGINT(20) UNSIGNED NOT NULL REFERENCES prk_run_history(id),
 		 time INT(11) NOT NULL,
 		 created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP(),
 		 updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP()
@@ -125,7 +125,7 @@ for map_name in cursorH.execute("SELECT name FROM sqlite_master;").fetchall():
 
 	print(name)
 	try:
-		dbCursor.execute("INSERT INTO maps (id, name, creator, description, type, checkpoints) VALUES (?,?,?,?,?,?)", (i,name,author,desc,_type,len(cps)))
+		dbCursor.execute("INSERT INTO prk_maps (id, name, creator, description, type, checkpoints) VALUES (?,?,?,?,?,?)", (i,name,author,desc,_type,len(cps)))
 		dbConnection.commit()
 	except Exception as e:
 		print(e)
@@ -138,7 +138,7 @@ for map_name in cursorH.execute("SELECT name FROM sqlite_master;").fetchall():
 		deaths = record[3]
 
 		dbCursor.execute("""
-			INSERT INTO run_history
+			INSERT INTO prk_run_history
 			(player_id, map_id, time, death_count, created_at, updated_at)
 			VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), FROM_UNIXTIME(?));
 			""", (pid, i, run_time, deaths, run_day, run_day))
