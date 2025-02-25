@@ -126,7 +126,7 @@ def create_player_table(protocol):
 
 def create_map_table(protocol):
 	protocol.dbCursor.execute("""
-		CREATE TABLE IF NOT EXISTS maps
+		CREATE TABLE IF NOT EXISTS prk_maps
 		(id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
 		 name VARCHAR(255) NOT NULL UNIQUE,
 		 creator VARCHAR(255) NOT NULL,
@@ -142,10 +142,10 @@ def create_map_table(protocol):
 
 def create_run_history_table(protocol):
 	protocol.dbCursor.execute("""
-		CREATE TABLE IF NOT EXISTS run_history
+		CREATE TABLE IF NOT EXISTS prk_run_history
 		(id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
 		 player_id BIGINT(20) UNSIGNED NOT NULL REFERENCES players(id),
-		 map_id BIGINT(20) UNSIGNED NOT NULL REFERENCES maps(id),
+		 map_id BIGINT(20) UNSIGNED NOT NULL REFERENCES prk_maps(id),
 		 demo_url VARCHAR(255) NOT NULL,
 		 client_info VARCHAR(255) NOT NULL,
 		 time INT(11) NOT NULL,
@@ -159,10 +159,10 @@ def create_run_history_table(protocol):
 
 def create_checkpoint_history_table(protocol):
 	protocol.dbCursor.execute("""
-		CREATE TABLE IF NOT EXISTS checkpoint_history
+		CREATE TABLE IF NOT EXISTS prk_checkpoint_history
 		(id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
 		 checkpoint INT(11) NOT NULL,
-		 run_id BIGINT(20) UNSIGNED NOT NULL REFERENCES run_history(id),
+		 run_id BIGINT(20) UNSIGNED NOT NULL REFERENCES prk_run_history(id),
 		 time INT(11) NOT NULL,
 		 created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP(),
 		 updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP()
@@ -208,17 +208,17 @@ def apply_script(protocol, connection, config):
 			if (info.extensions and "parkour_3d_checkpoints" in info.extensions):
 				_type = "checkpoint"
 
-			self.dbCursor.execute("SELECT id FROM maps WHERE name=?", (info.name,))
+			self.dbCursor.execute("SELECT id FROM prk_maps WHERE name=?", (info.name,))
 			res = self.dbCursor.fetchone()
 
 			if res is None:
 				try:
-					self.dbCursor.execute("INSERT INTO maps (name, creator, description, type, checkpoints) VALUES (?, ?, ?, ?, ?)",
+					self.dbCursor.execute("INSERT INTO prk_maps (name, creator, description, type, checkpoints) VALUES (?, ?, ?, ?, ?)",
 						(info.name, info.author, info.description, _type, len(info.extensions["parkour_checkpoints"])))
 
 					self.dbConnection.commit()
 
-					self.dbCursor.execute("SELECT id FROM maps WHERE name=?", (info.name,))
+					self.dbCursor.execute("SELECT id FROM prk_maps WHERE name=?", (info.name,))
 					self.mapID = self.dbCursor.fetchone()[0]
 
 				except mariadb.Error as e:
@@ -234,18 +234,18 @@ def apply_script(protocol, connection, config):
 
 			try:
 				self.dbCursor.execute("""
-					INSERT INTO run_history (player_id, map_id, demo_url, client_info, time, death_count)
+					INSERT INTO prk_run_history (player_id, map_id, demo_url, client_info, time, death_count)
 					VALUES (?, ?, ?, ?, ?, ?);
 				""", (player.logged_user_id, self.mapID, None, player.client_string, ts, player.deathcount))
 				self.dbConnection.commit()
 
-				self.dbCursor.execute("SELECT id FROM run_history WHERE player_id=? ORDER BY created_at DESC LIMIT 1", (player.logged_user_id,))
+				self.dbCursor.execute("SELECT id FROM prk_run_history WHERE player_id=? ORDER BY created_at DESC LIMIT 1", (player.logged_user_id,))
 				runID = self.dbCursor.fetchone()[0]
 
 				i = 0
 				for tms in player.current_times:
 					self.dbCursor.execute("""
-						INSERT INTO checkpoint_history (checkpoint, run_id, time)
+						INSERT INTO prk_checkpoint_history (checkpoint, run_id, time)
 						VALUES (?, ?, ?);
 					""", (i, runID, tms))
 					i+=1
@@ -257,10 +257,10 @@ def apply_script(protocol, connection, config):
 
 		def get_top_ten(self):
 			self.dbCursor.execute("""
-				SELECT run.player_id, pl.login, run.map_id, run.time, run.death_count FROM run_history as run
+				SELECT run.player_id, pl.login, run.map_id, run.time, run.death_count FROM prk_run_history as run
 				INNER JOIN players as pl on run.player_id = pl.id
 				INNER JOIN (
-					SELECT player_id, map_id, min(time) as ts FROM run_history WHERE map_id=? GROUP BY player_id
+					SELECT player_id, map_id, min(time) as ts FROM prk_run_history WHERE map_id=? GROUP BY player_id
 				) as i ON run.time = i.ts AND run.player_id = i.player_id AND run.map_id = i.map_id ORDER BY time LIMIT 10
 			""", (self.mapID,))
 			hs = self.dbCursor.fetchall()
