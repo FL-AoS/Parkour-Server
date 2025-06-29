@@ -204,10 +204,12 @@ def nextcheckpoint(p):
 async def checking_loop(protocol):
 	last_update_network = 0
 	while True:
+		wu_t = False
 		try:
 			if time.time()-last_update_network >= 1/20:
-				protocol.update_network()
-				protocol.on_world_update()
+				wu_t = True
+				#protocol.update_network()
+				#protocol.on_world_update()
 				last_update_network = time.time()
 
 			player_list = list(protocol.players.values())
@@ -226,6 +228,9 @@ async def checking_loop(protocol):
 
 				if player.isresetting:
 					continue
+
+				if wu_t:
+					player.save_world_update()
 
 				if vector_collision(player.world_object.position, player.team.base) or vector_collision(player.world_object.position, player.team.other.base):
 					player.check_refill()
@@ -255,6 +260,7 @@ async def checking_loop(protocol):
 							player.reachedcheckpoint += 1
 							player.send_chat("You reached checkpoint %i/%i!"%(player.reachedcheckpoint, maxCps))
 							player.send_chat_warning(time_msg)
+							player.save_checkpoint_reach(get_formatted_parkour_time(player.current_times[player.reachedcheckpoint-1]), player.reachedcheckpoint, maxCps)
 
 							if player.reachedcheckpoint == maxCps:
 								player.send_chat("FINISH!!!")
@@ -413,12 +419,14 @@ def apply_script(protocol, connection, config):
 					completedmessage = msg % (self.name, displaytime, self.deathcount)
 					self.protocol.broadcast_chat(completedmessage)
 					self.protocol.irc_say(completedmessage)
+					self.save_finish_time(displaytime)
 
 					self.on_parkour_finish(ts)
 
 					if SAVE_HIGHSCORES.get() and self.logged_user_id is not None:
 						self.protocol.save_record(self, ts)
 						self.shadowinputSave(ts)
+						self.save_to_demo()
 
 					if self.logged_user_id is None:
 						self.send_chat("To save your scores on /highscore, please use /register or /login")

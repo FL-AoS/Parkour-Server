@@ -100,6 +100,9 @@ def apply_script(protocol, connection, config):
 				"walk": self.handle_shadowwalk,
 				"orientation": self.handle_shadowori,
 				"position": self.handle_shadowpos,
+				"world_update": self.handle_wu,
+				"checkpoint": self.handle_checkpoint,
+				"finish": self.handle_finish
 			}
 
 			types[obj["type"]](obj["inputs"])
@@ -110,6 +113,15 @@ def apply_script(protocol, connection, config):
 			self.world_object.set_crouch(crouch)
 
 			self.send_shadowinputs()
+
+		def handle_wu(self, obj):
+			pass
+
+		def handle_checkpoint(self, obj):
+			pass
+
+		def handle_finish(self, obj):
+			pass
 
 		def handle_shadowwalk(self, obj):
 			self.world_object.set_walk(*obj)
@@ -177,6 +189,27 @@ def apply_script(protocol, connection, config):
 					"inputs": (x, y, z)
 				}))
 			return connection.on_position_update(self)
+
+		def save_world_update(self):
+			if self.shadow_mode:
+				self.shadow_inputs.append((time()-self.start_shadow_mode, {
+					"type": "world_update",
+					"inputs": [(self.world_object.position.get(), self.world_object.orientation.get())]
+				}))
+
+		def save_checkpoint_reach(self, formatted_time, cp, maxcps):
+			if self.shadow_mode:
+				self.shadow_inputs.append((time()-self.start_shadow_mode, {
+					"type": "checkpoint",
+					"inputs": (formatted_time, cp, maxcps)
+				}))
+
+		def save_finish_time(self, formatted_time):
+			if self.shadow_mode:
+				self.shadow_inputs.append((time()-self.start_shadow_mode, {
+					"type": "finish",
+					"inputs": (formatted_time)
+				}))
 
 		def disconnect(self, data=0):
 			if not self.local:

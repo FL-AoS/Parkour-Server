@@ -233,10 +233,12 @@ def apply_script(protocol, connection, config):
 				return
 
 			try:
+				demo_name = "%i_%i_%i.demo"%(self.mapID,player.logged_user_id,player.joinedtimestamp)
+
 				self.dbCursor.execute("""
 					INSERT INTO prk_run_history (player_id, map_id, demo_url, client_info, time, death_count)
 					VALUES (?, ?, ?, ?, ?, ?);
-				""", (player.logged_user_id, self.mapID, None, player.client_string, ts, player.deathcount))
+				""", (player.logged_user_id, self.mapID, demo_name, player.client_string, ts, player.deathcount))
 				self.dbConnection.commit()
 
 				self.dbCursor.execute("SELECT id FROM prk_run_history WHERE player_id=? ORDER BY created_at DESC LIMIT 1", (player.logged_user_id,))
