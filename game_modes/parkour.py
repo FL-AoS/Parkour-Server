@@ -88,7 +88,11 @@ def highscore(connection):
 	/highscore
 	"""
 
-	displayscores = connection.protocol.get_top_ten()
+	#displayscores = connection.protocol.get_top_ten()
+	displayscores = connection.protocol.get_map_highscores()
+
+	if not displayscores:
+		return "Error..."
 
 	i = 1
 	strscores = []
@@ -96,9 +100,9 @@ def highscore(connection):
 		if i > 10:
 			break
 
-		username = displayvalues[1]
-		f_time = get_formatted_parkour_time(displayvalues[3])
-		deaths = displayvalues[4]
+		username = displayvalues["player"]["login"]
+		f_time = get_formatted_parkour_time(displayvalues["run"])
+		deaths = displayvalues["run_info"]["death_count"]
 
 		place = str(i) + ". "
 		if i < 10:
