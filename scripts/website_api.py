@@ -106,7 +106,9 @@ def apply_script(protocol, connection, config):
 			if (self.map_info.extensions and "parkour_3d_checkpoints" in self.map_info.extensions):
 				infos["type"] = "checkpoint"
 
-			infos["checkpoints"] = len(self.map_info.extensions["parkour_checkpoints"])
+			infos["checkpoints"] = 0
+			if "parkour_checkpoints" in self.map_info.extensions:
+				infos["checkpoints"] = len(self.map_info.extensions["parkour_checkpoints"])
 
 			resp = requests.post(SAVE_MAP_ENDPOINT, headers=HEADERS, json=infos)
 

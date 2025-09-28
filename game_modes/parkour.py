@@ -16,7 +16,8 @@ Setup:
 			'water_damage' : 100,
 			'parkour_start' : (127, 256, 50),
 			'parkour_end' : (382, 256, 50),
-			'parkour_checkpoints' : [(187, 256, 50), (240, 256, 39), (289, 256, 50)]
+			'parkour_checkpoints' : [(187, 256, 50), (240, 256, 39), (289, 256, 50)],
+			'parkour_kill_layer' : 59
 		}
 
 	'parkour_start' marks the coordinate for spawn, 'parkour_end' for the base
@@ -51,6 +52,7 @@ Customizations by sByte:
 - on_parkour_finish event (depends on parkour api)
 - Parkour categorizer (custom, WIP)
 - support for 3d checkpoints with ext: parkour_3d_checkpoints (bool) & parkour_checkpoints_size (tuple)
+- added "parkour_kill_layer" extension, so any map that has this extension will kill automatically players that go over that Z layer, i.e. 59 for water level
 """
 
 import time
@@ -195,6 +197,9 @@ def nextcheckpoint(p):
 	if not p.world_object:
 		return "Looks like you isnt in the world, please join in a team."
 
+	if "parkour_checkpoints" not in p.protocol.map_info.extensions:
+		return "Map not has any checkpoints"
+
 	p.reachedcheckpoint += 1
 
 	if p.reachedcheckpoint >= len(p.protocol.map_info.extensions["parkour_checkpoints"]):
@@ -227,10 +232,15 @@ async def checking_loop(protocol):
 				if player.team.id == -1 or player.team.id == 1:
 					continue
 
-				if player.practicemode:
+				if player.isresetting:
 					continue
 
-				if player.isresetting:
+				x, y, z = player.world_object.position.get()
+				if "parkour_kill_layer" in protocol.map_info.extensions:
+					if z >= protocol.map_info.extensions["parkour_kill_layer"]:
+						player.kill()
+
+				if player.practicemode:
 					continue
 
 				if wu_t:
@@ -243,7 +253,6 @@ async def checking_loop(protocol):
 					checkpoints = protocol.map_info.extensions["parkour_checkpoints"]
 					checkpoints_size = protocol.map_info.extensions["parkour_checkpoints_size"]
 
-					x, y, z = player.world_object.position.get()
 					index = player.reachedcheckpoint
 					maxCps = len(checkpoints)
 
